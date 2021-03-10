@@ -14,25 +14,6 @@ void processInput(GLFWwindow *window);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-////顶点着色器代码
-//const char *vertexShaderSource="#version 330 core\n"
-//"layout (location = 0) in vec3 aPos;\n"
-//"layout (location = 1) in vec3 aColor;\n"
-//"out vec3 ourColor;\n"
-//"void main()\n"
-//"{\n"
-//"gl_Position =vec4(aPos,1.0);\n"
-//"ourColor=aColor;\n"
-//"}\n";
-////片元着色器代码
-//const char *fragmentShaderSource="#version 330 core\n"
-//"out vec4 FragColor;"
-//"uniform vec4 unifColor;"
-//"in vec3 ourColor;\n"
-//"void main()\n"
-//"{FragColor =vec4(ourColor,1.0f);}";
-
-
 int main()
 {
     // glfw: initialize and configure
@@ -65,65 +46,22 @@ int main()
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
-    
-    //    //    开始渲染流程
-    //    //     build and compile our shader program
-    //    //     vertex shader
-    //    //    创建顶点着色器 把着色器源码附加的着色器上 然后编译
-    //    unsigned int vertexShader=glCreateShader(GL_VERTEX_SHADER);
-    //    glShaderSource(vertexShader,1,&vertexShaderSource,NULL);
-    //    glCompileShader(vertexShader);
-    //    // check for shader compile errors
-    //    int success;
-    //    char infoLog[512];
-    //    glGetShaderiv(vertexShader,GL_COMPILE_STATUS,&success);
-    //    if(!success)
-    //    {
-    //        glGetShaderInfoLog(vertexShader,512,NULL,infoLog);
-    //        std::cout<<"ERROR::SHADER::VERTEX::COMPILATION_FAILED\n"<<infoLog<<std::endl;
-    //    }
-    //    //    创建片元着色器 把着色器源码附加的着色器上 然后编译
-    //    unsigned int fragmentShader=glCreateShader(GL_FRAGMENT_SHADER);
-    //    glad_glShaderSource(fragmentShader,1,&fragmentShaderSource,NULL);
-    //    glad_glCompileShader(fragmentShader);
-    //    //       check for shader compile errors
-    //    glGetShaderiv(fragmentShader,GL_COMPILE_STATUS,&success);
-    //    if(!success)
-    //    {
-    //        glGetShaderInfoLog(fragmentShader,512,NULL,infoLog);
-    //        std::cout<<"ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n"<<infoLog<<std::endl;
-    //    }
-    //
-    //    //link shaders  生成着色器程序 组合连接着色器
-    //    unsigned int shaderPorgram=glad_glCreateProgram();
-    //    glad_glAttachShader(shaderPorgram,vertexShader);
-    //    glad_glAttachShader(shaderPorgram,fragmentShader);
-    //    glad_glLinkProgram(shaderPorgram);
-    //    //check for linking errors
-    //    glad_glGetProgramiv(shaderPorgram,GL_LINK_STATUS,&success);
-    //    if(!success)
-    //    {
-    //        glad_glGetProgramInfoLog(shaderPorgram,512,NULL,infoLog);
-    //         std::cout<<"ERROR::SHADER::PROGRAM::LINKING_FAILED\n"<<infoLog<<std::endl;
-    //    }
-    //    //生成着色器程序后 删除顶点和片元着色器
-    //    glad_glDeleteShader(vertexShader);
-    //    glad_glDeleteShader(fragmentShader);
+
     
     Shader ourShader("Shader/shader.vs","Shader/shader.fs");
     
     float vertices[]={
         //位置          //颜色
-        0.5f,0.5f,0.0f,   1.0f,0.0f,0.0f,  //右上角
+        0.0f,0.5f,0.0f,   1.0f,0.0f,0.0f,  //右上角
         0.5f,-0.5f,0.0f,  0.0f,1.0f,0.0f,//右下角
         -0.5f,-0.5f,0.0f, 0.0f,0.0f,1.0f,//左下角
-        -0.5f,0.5f,0.0f,  1.0f,1.0f,0.0f//左上角
+//        -0.5f,0.5f,0.0f,  1.0f,1.0f,0.0f//左上角
     };
     
     //opengl 右手坐标系
     unsigned int indices[]={
-        0,1,3,
-        1,2,3
+        0,1,2,
+//        1,2,3
     };
     
     unsigned int VBO,VAO,EBO;
@@ -169,21 +107,13 @@ int main()
         // render
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-        
-        //      激活着色器
-        // glad_glUseProgram(shaderPorgram);
+     
         
         ourShader.use();
         
-        //        //更新uniform  outColor颜色
-        //        float timeValue=glfwGetTime();
-        //        float greenValue=sin(timeValue)/2.0f+0.5f;
-        //        int vertexColorLocation=glad_glGetUniformLocation(shaderPorgram,"unifColor");
-        //        glad_glUniform4f(vertexColorLocation,0.0f,greenValue,0.0f,1.0f);
-        
         glad_glBindVertexArray(VAO);//seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
         //        glad_glDrawArrays(GL_TRIANGLES,0,3);
-        glad_glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
+       glad_glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
         
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // 函数会交换颜色缓冲区
@@ -195,8 +125,7 @@ int main()
     glad_glDeleteVertexArrays(1,&VAO);
     glad_glDeleteBuffers(1,&VBO);
     glad_glDeleteBuffers(1,&EBO);
-    //  glad_glDeleteProgram(shaderPorgram);
-    
+
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // 渲染循环结束后需要正确释放、删除之前的分配的所有资源
     glfwTerminate();
