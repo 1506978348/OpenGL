@@ -19,7 +19,7 @@ const char *vertexShaderSource="#version 330 core\n"
 "{gl_Position =vec4(aPos.x,aPos.y,aPos.z,1.0);}";
 //片元着色器代码
 const char *fragmentShaderSource="#version 330 core\n"
-"out vec4 FragColor"
+"out vec4 FragColor;"
 "void main()\n"
 "{FragColor =vec4(1.0f,0.5f,0.2f,1.0f);}";
 
@@ -31,11 +31,11 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
+    
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
-
+    
     // glfw window creation
     GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
     if (window == NULL)
@@ -48,7 +48,7 @@ int main()
     glfwMakeContextCurrent(window);
     //注册函数告诉GLFW每当窗口调整大小的时候调用这个函数
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-
+    
     // glad: load all OpenGL function pointers
     // 在调用任何OpenGL的函数之前我们需要初始化GLAD
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -57,10 +57,10 @@ int main()
         return -1;
     }
     
-//    开始渲染流程
-//     build and compile our shader program
-//     vertex shader
-//    创建顶点着色器 把着色器源码附加的着色器上 然后编译
+    //    开始渲染流程
+    //     build and compile our shader program
+    //     vertex shader
+    //    创建顶点着色器 把着色器源码附加的着色器上 然后编译
     unsigned int vertexShader=glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader,1,&vertexShaderSource,NULL);
     glCompileShader(vertexShader);
@@ -71,30 +71,104 @@ int main()
     if(!success)
     {
         glGetShaderInfoLog(vertexShader,512,NULL,infoLog);
-        std::count<<"ERROR::SHADER::VERTEX::COMPILATION_FAILED\n"<<infoLog<<std::endl;
+        std::cout<<"ERROR::SHADER::VERTEX::COMPILATION_FAILED\n"<<infoLog<<std::endl;
     }
     //    创建片元着色器 把着色器源码附加的着色器上 然后编译
-    unsigned int shaderProgram=glCreateShader();
+    unsigned int fragmentShader=glCreateShader(GL_FRAGMENT_SHADER);
+    glad_glShaderSource(fragmentShader,1,&fragmentShaderSource,NULL);
+    glad_glCompileShader(fragmentShader);
+    //       check for shader compile errors
+    glGetShaderiv(fragmentShader,GL_COMPILE_STATUS,&success);
+    if(!success)
+    {
+        glGetShaderInfoLog(fragmentShader,512,NULL,infoLog);
+        std::cout<<"ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n"<<infoLog<<std::endl;
+    }
     
-
+    //link shaders  生成着色器程序 组合连接着色器
+    unsigned int shaderPorgram=glad_glCreateProgram();
+    glad_glAttachShader(shaderPorgram,vertexShader);
+    glad_glAttachShader(shaderPorgram,fragmentShader);
+    glad_glLinkProgram(shaderPorgram);
+    //check for linking errors
+    glad_glGetProgramiv(shaderPorgram,GL_LINK_STATUS,&success);
+    if(!success)
+    {
+        glad_glGetProgramInfoLog(shaderPorgram,512,NULL,infoLog);
+         std::cout<<"ERROR::SHADER::PROGRAM::LINKING_FAILED\n"<<infoLog<<std::endl;
+    }
+    //生成着色器程序后 删除顶点和片元着色器
+    glad_glDeleteShader(vertexShader);
+    glad_glDeleteShader(fragmentShader);
+    
+    float vertices[]={
+        0.5f,0.5f,0.0f, //右上角
+        0.5f,-0.5f,0.0f,//右下角
+        -0.5f,-0.5f,0.0f,//左下角
+        -0.5f,0.5f,0.0f,//左上角
+    };
+    
+    //opengl 右手坐标系
+    unsigned int indices[]={
+        0,1,3,
+        1,2,3
+    };
+    
+    unsigned int VBO,VAO,EBO;
+    glad_glGenVertexArrays(1,&VAO);
+    glad_glGenBuffers(1,&VBO);
+    glad_glGenBuffers(1,&EBO);
+    
+//     bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
+    glad_glBindVertexArray(VAO);
+    //复制顶点数组到缓冲中
+    glad_glBindBuffer(GL_ARRAY_BUFFER,VBO);
+    glad_glBufferData(GL_ARRAY_BUFFER,sizeof(vertices),vertices,GL_STATIC_DRAW);
+    
+    //复制索引数据到索引缓冲中
+    glad_glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,EBO);
+    glad_glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(indices),indices,GL_STATIC_DRAW);
+    
+    //设置顶点属性指针
+    glad_glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,3*sizeof(float),(void*)0);
+    glad_glEnableVertexAttribArray(0);
+    
+//      note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
+    glad_glBindBuffer(GL_ARRAY_BUFFER,0);
+//     You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
+//     VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
+    glad_glBindVertexArray(0);
+    
     // render loop
     // 函数在我们每次循环的开始前检查一次GLFW是否被要求退出
     while (!glfwWindowShouldClose(window))
     {
         // input
         processInput(window);
-
+        
         // render
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-
+        
+//       draw triangle
+        glad_glUseProgram(shaderPorgram);
+        
+        glad_glBindVertexArray(VAO);//seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+//        glad_glDrawArrays(GL_TRIANGLES,0,3);
+        glad_glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
+        
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // 函数会交换颜色缓冲区
         glfwSwapBuffers(window);
         //函数检查有没有触发什么事件（比如键盘输入、鼠标移动等）
         glfwPollEvents();
     }
-
+    
+    glad_glDeleteVertexArrays(1,&VAO);
+    glad_glDeleteBuffers(1,&VBO);
+    glad_glDeleteBuffers(1,&EBO);
+    glad_glDeleteProgram(shaderPorgram);
+    
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // 渲染循环结束后需要正确释放、删除之前的分配的所有资源
     glfwTerminate();
