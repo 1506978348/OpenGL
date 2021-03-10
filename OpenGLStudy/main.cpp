@@ -46,7 +46,7 @@ int main()
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
-
+    
     
     Shader ourShader("Shader/shader.vs","Shader/shader.fs");
     
@@ -55,13 +55,13 @@ int main()
         0.0f,0.5f,0.0f,   1.0f,0.0f,0.0f,  //右上角
         0.5f,-0.5f,0.0f,  0.0f,1.0f,0.0f,//右下角
         -0.5f,-0.5f,0.0f, 0.0f,0.0f,1.0f,//左下角
-//        -0.5f,0.5f,0.0f,  1.0f,1.0f,0.0f//左上角
+        //        -0.5f,0.5f,0.0f,  1.0f,1.0f,0.0f//左上角
     };
     
     //opengl 右手坐标系
     unsigned int indices[]={
         0,1,2,
-//        1,2,3
+        //        1,2,3
     };
     
     unsigned int VBO,VAO,EBO;
@@ -96,7 +96,7 @@ int main()
     //渲染模式 GL_LINE 线框模式
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     
-    
+    float dis=0.0f;
     // render loop
     // 函数在我们每次循环的开始前检查一次GLFW是否被要求退出
     while (!glfwWindowShouldClose(window))
@@ -107,13 +107,14 @@ int main()
         // render
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-     
         
         ourShader.use();
+        dis=dis+0.001f;
+        ourShader.setFloat("offset", dis);
         
         glad_glBindVertexArray(VAO);//seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
         //        glad_glDrawArrays(GL_TRIANGLES,0,3);
-       glad_glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
+        glad_glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
         
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // 函数会交换颜色缓冲区
@@ -125,7 +126,7 @@ int main()
     glad_glDeleteVertexArrays(1,&VAO);
     glad_glDeleteBuffers(1,&VBO);
     glad_glDeleteBuffers(1,&EBO);
-
+    
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // 渲染循环结束后需要正确释放、删除之前的分配的所有资源
     glfwTerminate();
