@@ -15,13 +15,18 @@ const unsigned int SCR_HEIGHT = 600;
 //顶点着色器代码
 const char *vertexShaderSource="#version 330 core\n"
 "layout (location = 0) in vec3 aPos;\n"
+"out vec4 vertexColor;\n"
 "void main()\n"
-"{gl_Position =vec4(aPos.x,aPos.y,aPos.z,1.0);}";
+"{\n"
+"gl_Position =vec4(aPos,1.0);\n"
+"vertexColor=vec4(0.5,0.0,0.0,1.0);\n"
+"}\n";
 //片元着色器代码
 const char *fragmentShaderSource="#version 330 core\n"
 "out vec4 FragColor;"
+"in vec4 vertexColor;\n"
 "void main()\n"
-"{FragColor =vec4(1.0f,0.5f,0.2f,1.0f);}";
+"{FragColor =vertexColor;}";
 
 
 int main()
@@ -138,6 +143,10 @@ int main()
 //     You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
 //     VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
     glad_glBindVertexArray(0);
+    
+    // uncomment this call to draw in wireframe polygons.
+    //渲染模式 GL_LINE 线框模式
+       //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     
     // render loop
     // 函数在我们每次循环的开始前检查一次GLFW是否被要求退出
