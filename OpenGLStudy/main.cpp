@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <cmath>
+#include "stb_image.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -50,24 +51,24 @@ int main()
     
     Shader ourShader("Shader/shader.vs","Shader/shader.fs");
     
-    float vertices[]={
-        //位置          //颜色
-        0.0f,0.5f,0.0f,   1.0f,0.0f,0.0f,  //右上角
-        0.5f,-0.5f,0.0f,  0.0f,1.0f,0.0f,//右下角
-        -0.5f,-0.5f,0.0f, 0.0f,0.0f,1.0f,//左下角
-        //        -0.5f,0.5f,0.0f,  1.0f,1.0f,0.0f//左上角
+    float vertices[] = {
+        // positions          // colors           // texture coords
+        0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // top right
+        0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f, // bottom right
+        -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f, // bottom left
+        -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f  // top left
+    };
+    //OpenGL右手坐标系
+    unsigned int indices[] = {
+        0, 1, 3, // first triangle
+        1, 2, 3  // second triangle
     };
     
-    //opengl 右手坐标系
-    unsigned int indices[]={
-        0,1,2,
-        //        1,2,3
-    };
-    
-    unsigned int VBO,VAO,EBO;
+    unsigned int VBO,VAO,EBO,texture1,texture2;
     glad_glGenVertexArrays(1,&VAO);
     glad_glGenBuffers(1,&VBO);
     glad_glGenBuffers(1,&EBO);
+    glad_glGenTextures(1,&texture1);
     
     //     bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
     glad_glBindVertexArray(VAO);
@@ -79,13 +80,65 @@ int main()
     glad_glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,EBO);
     glad_glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(indices),indices,GL_STATIC_DRAW);
     
+    //在绑定纹理前激活纹理单元
+    glad_glActiveTexture(GL_TEXTURE0);
+    //绑定纹理
+    glad_glBindTexture(GL_TEXTURE_2D,texture1);
+    // 为当前绑定的纹理对象设置环绕、过滤方式
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    
+    stbi_set_flip_vertically_on_load(true);
+    
+    //生成纹理
+    int width,height,nrChannels;
+    unsigned char *data=stbi_load("Texture/wall.jpg", &width, &height, &nrChannels, 0);
+    if(data)
+    {
+        glad_glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,width,height,0,GL_RGB,GL_UNSIGNED_BYTE,data);
+        glad_glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout<<"Failed to load texture1"<<std::endl;
+    }
+    stbi_image_free(data);
+    
+    glad_glGenTextures(1,&texture2);
+    glad_glActiveTexture(GL_TEXTURE1);
+    glad_glBindTexture(GL_TEXTURE_2D,texture2);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    data=stbi_load("Texture/face1.jpg", &width, &height, &nrChannels, 0);
+    if(data)
+    {
+        glad_glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,width,height,0,GL_RGB,GL_UNSIGNED_BYTE,data);
+        glad_glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout<<"Failed to load texture2"<<std::endl;
+    }
+    //释放图像内存
+    stbi_image_free(data);
+    
+    
     //设置顶点属性指针
-    glad_glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,6*sizeof(float),(void*)0);
+    glad_glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,8*sizeof(float),(void*)0);
     glad_glEnableVertexAttribArray(0);
     
     //颜色属性
-    glad_glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,6*sizeof(float),(void*)(3* sizeof(float)));
+    glad_glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,8*sizeof(float),(void*)(3* sizeof(float)));
     glad_glEnableVertexAttribArray(1);
+    
+    //纹理属性
+    glad_glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,8*sizeof(float),(void*)(6* sizeof(float)));
+    glad_glEnableVertexAttribArray(2);
+    
     //      note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
     glad_glBindBuffer(GL_ARRAY_BUFFER,0);
     //     You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
@@ -95,8 +148,10 @@ int main()
     // uncomment this call to draw in wireframe polygons.
     //渲染模式 GL_LINE 线框模式
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    ourShader.use();
+    ourShader.setInt("texture1",0);
+    ourShader.setInt("texture2",1);
     
-    float dis=0.0f;
     // render loop
     // 函数在我们每次循环的开始前检查一次GLFW是否被要求退出
     while (!glfwWindowShouldClose(window))
@@ -108,9 +163,8 @@ int main()
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         
+        
         ourShader.use();
-        dis=dis+0.001f;
-        ourShader.setFloat("offset", dis);
         
         glad_glBindVertexArray(VAO);//seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
         //        glad_glDrawArrays(GL_TRIANGLES,0,3);
