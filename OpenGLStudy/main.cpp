@@ -8,6 +8,10 @@
 #include <cmath>
 #include "stb_image.h"
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
 
@@ -151,11 +155,28 @@ int main()
     ourShader.use();
     ourShader.setInt("texture1",0);
     ourShader.setInt("texture2",1);
+//        //创建向量
+//       //glm::vec4 vec(1.0f, 0.0f, 0.0f, 1.0f);
+//       //glm0.9.9及以上版本 初始化矩阵 mat4 4*4单位矩阵
+//       glm::mat4 trans = glm::mat4(1.0f);
+//       //glm::translate返回一个平移矩阵
+//       trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
+//    //   trans= glm::rotate(trans,glm::radians(90.0f) ,glm::vec3(0.0f,0.0f,1.0f));
+//       trans=glm::scale(trans,glm::vec3(0.5,0.5,0.5));
+    
+    //获取shader uniform变量 transform 的地址
+     unsigned int transformLoc=glad_glGetUniformLocation(ourShader.ID,"transform");
     
     // render loop
     // 函数在我们每次循环的开始前检查一次GLFW是否被要求退出
     while (!glfwWindowShouldClose(window))
     {
+        
+        glm::mat4 trans = glm::mat4(1.0f);
+        trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
+        trans=glm::scale(trans,glm::vec3(0.5,0.5,1));
+        trans= glm::rotate(trans,(float)glfwGetTime() ,glm::vec3(0.0f,0.0f,1.0f));
+        glad_glUniformMatrix4fv(transformLoc,1,GL_FALSE,glm::value_ptr(trans));
         // input
         processInput(window);
         
@@ -168,6 +189,14 @@ int main()
         
         glad_glBindVertexArray(VAO);//seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
         //        glad_glDrawArrays(GL_TRIANGLES,0,3);
+        glad_glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
+        
+        glm::mat4 trans1 = glm::mat4(1.0f);
+        trans1 = glm::translate(trans1, glm::vec3(-0.5f, 0.5f, 0.0f));
+        float scalnum=glm::sin((float)glfwGetTime());
+        scalnum=abs(scalnum);
+        trans1=glm::scale(trans1,glm::vec3(scalnum,scalnum,1));
+        glad_glUniformMatrix4fv(transformLoc,1,GL_FALSE,glm::value_ptr(trans1));
         glad_glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
         
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
